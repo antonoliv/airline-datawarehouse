@@ -1,0 +1,92 @@
+@startuml
+
+
+json "Ticket" as ticket {
+    "PK": "Ticket Number",
+    "": ["Passenger ID"]
+}
+
+json "Aircraft" as aircraft {
+    "PK": "Aircraft Code",
+    "": ["Model", "Range"]
+}
+
+json "Aircraft Seat" as seat {
+    "PK": "Seat ID",
+    "": ["Aircraft Code", "Model", "Range", "Seat Number", "Fare Condition"]
+}
+
+json "Airport" as airport {
+    "PK": "Airport Code",
+    "": ["Name", "Latitude", "Longitude", "City", "Timezone"]
+}
+
+json "Date" as date {
+    "PK": "Date ID",
+    "": ["Minute", "Hour", "Day", "Weekday", "Week", "Month", "Year", "Date Value"]
+}
+
+' Flight Number and Status are a degenerate dimension
+' Flight Revenue and Seat Occupancy are aggregated facts
+' Seat Occupancy is semi-additive
+json "Flight" as flight #DarkGray {
+    "PK": "Flight ID",
+    "": ["Flight Number", "Status", "Scheduled Duration", "Actual Duration", "Flight Revenue", "Seat Occupancy"],
+    "FK1": "Scheduled Departure Date",
+    "FK2": "Scheduled Arrival Date",  
+    "FK3": "Actual Departure Date",
+    "FK4": "Actual Arrival Date",
+    "FK5": "Departure Airport",
+    "FK6": "Arrival Airport",
+    "FK7": "Aircraft"
+}
+
+flight -r-> date: "Scheduled Departure"
+flight -r-> date: "Scheduled Arrival"
+flight -r-> date: "Actual Departure"
+flight -r-> date: "Actual Arrival"
+flight -d-> airport: "Departure Airport"
+flight -d-> airport: "Arrival Airport"
+flight -u-> aircraft
+
+' at least one semi-additive and either aggregated facts or snapshots
+
+json "Booking" as booking #DarkGray {
+    "PK": "Booking Reference",
+    "": ["Amount", "Number of Tickets"],
+    "FK1": "Booking Date"
+}
+
+booking --> date
+
+json "Flight Dimension" as flightdim {
+    "PK": "Flight ID",
+    "": ["Flight Number", "Status", "Scheduled Duration", "Actual Duration"]
+}
+
+' Boarding Number and Status are generate dimension
+json "Boarding Pass" as boarding #DarkGray {
+    "": ["Boarding Number", "Amount"],
+    "FK1": "Ticket",
+    "FK2": "Seat",
+    "FK3": "Scheduled Departure Date",
+    "FK4": "Scheduled Arrival Date",  
+    "FK5": "Actual Departure Date",
+    "FK6": "Actual Arrival Date",
+    "FK7": "Departure Airport",
+    "FK8": "Arrival Airport",
+    "FK9": "Flight"
+}
+
+boarding --> ticket
+boarding -u-> seat
+boarding -l-> date: "Scheduled Departure"
+boarding -l-> date: "Scheduled Arrival"
+boarding -l-> date: "Actual Departure"
+boarding -l-> date: "Actual Arrival"
+boarding --> airport: "Departure Airport"
+boarding --> airport: "Arrival Airport"
+boarding --> flightdim
+
+
+@enduml
