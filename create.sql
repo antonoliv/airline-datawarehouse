@@ -1,3 +1,17 @@
+-- Drop tables
+DROP TABLE IF EXISTS Date;
+DROP TABLE IF EXISTS Aircraft;
+DROP TABLE IF EXISTS Airport;
+DROP TABLE IF EXISTS Flight;
+DROP TABLE IF EXISTS Booking;
+DROP TABLE IF EXISTS Ticket;
+DROP TABLE IF EXISTS Aircraft_Seat;
+DROP TABLE IF EXISTS Flight_DIM;
+DROP TABLE IF EXISTS Boarding_Pass;
+
+
+
+
 CREATE TABLE Date (
     date_id INTEGER PRIMARY KEY AUTOINCREMENT, 
     minute INTEGER, 
@@ -22,8 +36,8 @@ CREATE TABLE Airport (
     latitude REAL, 
     longitude REAL,
     city TEXT,
-    timezone TEXT,
-    FOREIGN KEY (location) REFERENCES Location(location_id)
+    timezone TEXT
+    --FOREIGN KEY (location) REFERENCES Location(location_id)
 );
 
 CREATE TABLE Flight (
@@ -42,7 +56,7 @@ CREATE TABLE Flight (
     dep_airport TEXT, 
     arr_airport TEXT,
     FOREIGN KEY (dep_airport) REFERENCES Airport(airport_code),
-    FOREIGN KEY (arr_airport) REFERENCES Airport(airport_code)
+    FOREIGN KEY (arr_airport) REFERENCES Airport(airport_code),
     FOREIGN KEY (aircraft) REFERENCES Aircraft(aircraft_code),
     FOREIGN KEY (sched_departure) REFERENCES Date(date_id),
     FOREIGN KEY (sched_arrival) REFERENCES Date(date_id),
@@ -72,19 +86,19 @@ CREATE TABLE Aircraft_Seat (
     range INTEGER
 );
 
-CREATE TABLE Flight_DIM {
+CREATE TABLE Flight_DIM (
     flight_id INTEGER PRIMARY KEY, 
     flight_no INTEGER,
     status TEXT,
     scheduled_duration REAL,
     actual_duration REAL
-}
+);
 
 
 CREATE TABLE Boarding_Pass (
     bpass_id INTEGER PRIMARY KEY AUTOINCREMENT, 
     amount REAL,
-    ticket TEXT PRIMARY KEY,
+    ticket TEXT,
     seat INTEGER,
     boarding_number INTEGER,
     sched_departure INTEGER,
@@ -94,13 +108,14 @@ CREATE TABLE Boarding_Pass (
     dep_airport TEXT, 
     arr_airport TEXT,
     flight INTEGER,
+    aircraft TEXT,
     FOREIGN KEY (dep_airport) REFERENCES Airport(airport_code),
-    FOREIGN KEY (arr_airport) REFERENCES Airport(airport_code)
+    FOREIGN KEY (arr_airport) REFERENCES Airport(airport_code),
     FOREIGN KEY (aircraft) REFERENCES Aircraft(aircraft_code),
     FOREIGN KEY (sched_departure) REFERENCES Date(date_id),
     FOREIGN KEY (sched_arrival) REFERENCES Date(date_id),
     FOREIGN KEY (actual_departure) REFERENCES Date(date_id),
-    FOREIGN KEY (actual_arrival) REFERENCES Date(date_id)
+    FOREIGN KEY (actual_arrival) REFERENCES Date(date_id),
     FOREIGN KEY (ticket) REFERENCES Ticket(ticket_no),
     FOREIGN KEY (seat) REFERENCES Aircraft_Seat(seat_id),
     FOREIGN KEY (flight) REFERENCES Flight_DIM(flight_id)
