@@ -3,7 +3,6 @@
 
 json "Ticket" as ticket {
     "PK": "Ticket Number",
-    "FK1": "Booking Reference",
     "": ["Passenger ID"]
 }
 
@@ -15,7 +14,7 @@ json "Aircraft" as aircraft {
 json "Aircraft Seat" as seat {
     "PK": "Seat ID",
     "FK1": "Aircraft Code",
-    "": ["Seat Number", "Fare Condition"]
+    "": ["Model", "Range", "Seat Number", "Fare Condition"]
 }
 
 json "Airport" as airport {
@@ -56,7 +55,7 @@ flight -u-> aircraft
 json "Booking" as booking #DarkGray {
     "PK": "Booking Reference",
     "FK1": "Booking Date",
-    "": ["Amount"]
+    "": ["Total Amount", "Number of Tickets"]
 }
 
 booking --> date

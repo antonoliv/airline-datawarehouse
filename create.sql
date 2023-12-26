@@ -20,7 +20,7 @@ CREATE TABLE Date (
 );
 
 CREATE TABLE Aircraft (
-    aircraft_code TEXT PRIMARY KEY, 
+    aircraft_code TEXT PRIMARY KEY,
     model TEXT, 
     range INTEGER
 );
@@ -60,23 +60,24 @@ CREATE TABLE Flight (
 
 CREATE TABLE Booking (
     book_ref TEXT PRIMARY KEY, 
-    amount REAL, 
+    total_amount REAL, 
     date INTEGER,
+    num_tickets INTEGER,
     FOREIGN KEY (date) REFERENCES Date(date_id)
 );
 
 CREATE TABLE Ticket (
     ticket_no TEXT PRIMARY KEY, 
-    passenger_id TEXT,
-    book_ref TEXT,
-    FOREIGN KEY (book_ref) REFERENCES Booking(book_ref)
+    passenger_id TEXT
 );
 
 CREATE TABLE Aircraft_Seat (
     seat_id INTEGER PRIMARY KEY AUTOINCREMENT,
     seat_no TEXT,
     fare_condition TEXT,
-    aircraft_code TEXT, 
+    aircraft_code TEXT,
+    model TEXT,
+    range INTEGER,
     FOREIGN KEY (aircraft_code) REFERENCES Aircraft(aircraft_code)
 );
 

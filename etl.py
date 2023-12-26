@@ -68,16 +68,20 @@ try:
     query = "SELECT * FROM aircrafts_data"
     aircrafts = pd.read_sql_query(query, sqlite_conn)
     aircrafts = aircrafts[["aircraft_code", "model", "range"]]
-    aircrafts = aircrafts.values.tolist()
-    datawarehouse_cursor.executemany("INSERT INTO Aircraft (aircraft_code, model, range) VALUES (?, ?, ?)", aircrafts)
+    datawarehouse_cursor.executemany("INSERT INTO Aircraft (aircraft_code, model, range) VALUES (?, ?, ?)", aircrafts.values.tolist())
 
-    # From seats create Aircraft_Seat with seat_no, fare_condition, aircraft_code
+    # From seats create Aircraft_Seat with seat_no, fare_condition, aircraft_code, model, range
     print("2. Seats")
     query = "SELECT * FROM seats"
     seats = pd.read_sql_query(query, sqlite_conn)
     seats = seats[["seat_no", "fare_conditions", "aircraft_code"]]
-    seats = seats.values.tolist()
-    datawarehouse_cursor.executemany("INSERT INTO Aircraft_Seat (seat_no, fare_condition, aircraft_code) VALUES (?, ?, ?)", seats)
+    # For each seat, get the aircraft info and insert into Aircraft_Seat
+    for index, row in seats.iterrows():
+        aircraft_code = row["aircraft_code"]
+        aircraft_info = aircrafts.loc[aircrafts["aircraft_code"] == aircraft_code].iloc[0]
+        model = aircraft_info["model"]
+        range_ = aircraft_info["range"]
+        datawarehouse_cursor.execute("INSERT INTO Aircraft_Seat (seat_no, fare_condition, aircraft_code, model, range) VALUES (?, ?, ?, ?, ?)", (row["seat_no"], row["fare_conditions"], row["aircraft_code"], model, range_))
 
     # From airports_data create Airport with airport_code, airport_name, city, coordinates, timezone
     print("3. Airports")
@@ -94,6 +98,7 @@ try:
     airports = airports.values.tolist()
     datawarehouse_cursor.executemany("INSERT INTO Airport (airport_code, name, city, latitude, longitude, timezone) VALUES (?, ?, ?, ?, ?, ?)", airports)
 
+    # TODO num_tickets
     # From bookings create Booking with book_ref, book_date, total_amount
     print("4. Bookings")
     # book_date becomes a unique Date into Date table
@@ -104,28 +109,79 @@ try:
     bookings["book_date"] = bookings["book_date"].apply(lambda x: parse_date(x))
     # For each date, insert into Date table and apply the ID to the booking as date
     print("Inserting dates and bookings...")
-    # dates = []
-    # for index, row in bookings.iterrows():
-    #     date = row["book_date"]
-    #     # Check if date is already in dates
-    #     if date not in dates:
-    #         dates.append(date)
-    #         # Insert into Date table
-    #         datawarehouse_cursor.execute("INSERT INTO Date (minute, hour, day, weekday, week, month, year) VALUES (?, ?, ?, ?, ?, ?, ?)", date)
-    #     # Get the ID of the date
-    #     datawarehouse_cursor.execute("SELECT date_id FROM Date WHERE minute = ? AND hour = ? AND day = ? AND weekday = ? AND week = ? AND month = ? AND year = ?", date)
-    #     date_id = datawarehouse_cursor.fetchone()[0]
-    #     # Insert into Booking table
-    #     datawarehouse_cursor.execute("INSERT INTO Booking (book_ref, date, amount) VALUES (?, ?, ?)", (row["book_ref"], date_id, row["total_amount"]))
     for index, row in bookings.iterrows():
         date = row["book_date"]
-        # Check if date is already in dates
         # Insert into Date table
         datawarehouse_cursor.execute("INSERT INTO Date (minute, hour, day, weekday, week, month, year) VALUES (?, ?, ?, ?, ?, ?, ?)", date)
         # Get the ID of the date
         date_id = datawarehouse_cursor.lastrowid
         # Insert into Booking table
-        datawarehouse_cursor.execute("INSERT INTO Booking (book_ref, date, amount) VALUES (?, ?, ?)", (row["book_ref"], date_id, row["total_amount"]))
+        datawarehouse_cursor.execute("INSERT INTO Booking (book_ref, date, total_amount) VALUES (?, ?, ?)", (row["book_ref"], date_id, row["total_amount"]))
+
+    # From tickets create Ticket with ticket_no, book_ref, passenger_id
+    print("5. Tickets")
+    query = "SELECT * FROM tickets"
+    tickets = pd.read_sql_query(query, sqlite_conn)
+    tickets = tickets[["ticket_no", "passenger_id"]]
+    tickets = tickets.values.tolist()
+    datawarehouse_cursor.executemany("INSERT INTO Ticket (ticket_no, passenger_id) VALUES (?, ?)", tickets)
+
+    # From flights create Flight and Flight_DIM
+    print("6. Flights")
+    query = "SELECT * FROM flights"
+    flights = pd.read_sql_query(query, sqlite_conn)
+    flights = flights[["flight_id", "flight_no", "scheduled_departure", "scheduled_arrival", "departure_airport", "arrival_airport", "status", "aircraft_code", "actual_departure", "actual_arrival"]]
+    # parse dates
+    print("Parsing dates...")
+    flights["scheduled_departure_parsed"] = flights["scheduled_departure"].apply(lambda x: parse_date(x))
+    flights["scheduled_arrival_parsed"] = flights["scheduled_arrival"].apply(lambda x: parse_date(x))
+    # parse actual dates if not \\N
+    flights["actual_departure_parsed"] = flights["actual_departure"].apply(lambda x: parse_date(x) if x != "\\N" else x)
+    flights["actual_arrival_parsed"] = flights["actual_arrival"].apply(lambda x: parse_date(x) if x != "\\N" else x)
+    # For each flight, insert into Flight and Flight_DIM
+    print("Inserting flights...")
+    for index, row in flights.iterrows():
+        scheduled_duration = pd.Timestamp(row["scheduled_arrival"]) - pd.Timestamp(row["scheduled_departure"])
+        scheduled_duration = scheduled_duration.seconds
+        actual_departure = row["actual_departure"]
+        actual_arrival = row["actual_arrival"]
+        actual_duration = 0
+        # Only calculate actual duration if actual_departure and actual_arrival are not null
+        if actual_departure != "\\N" and actual_arrival != "\\N":
+            actual_duration = pd.Timestamp(actual_arrival) - pd.Timestamp(actual_departure)
+            actual_duration = actual_duration.seconds
+        datawarehouse_cursor.execute("INSERT INTO Flight_DIM (flight_id, flight_no, status, scheduled_duration, actual_duration) VALUES (?, ?, ?, ?, ?)",
+            (row["flight_id"], row["flight_no"], row["status"], scheduled_duration, actual_duration)
+        )
+        # Insert Dates into Date table and get IDs
+        scheduled_departure_date = row["scheduled_departure_parsed"]
+        scheduled_arrival_date = row["scheduled_arrival_parsed"]
+        actual_departure_date = row["actual_departure_parsed"]
+        actual_arrival_date = row["actual_arrival_parsed"]
+        # Insert into Date table
+        datawarehouse_cursor.execute("INSERT INTO Date (minute, hour, day, weekday, week, month, year) VALUES (?, ?, ?, ?, ?, ?, ?)", scheduled_departure_date)
+        scheduled_departure_date_id = datawarehouse_cursor.lastrowid
+        datawarehouse_cursor.execute("INSERT INTO Date (minute, hour, day, weekday, week, month, year) VALUES (?, ?, ?, ?, ?, ?, ?)", scheduled_arrival_date)
+        scheduled_arrival_date_id = datawarehouse_cursor.lastrowid
+        actual_departure_date_id = 0
+        actual_arrival_date_id = 0
+        # If actual_departure and actual_arrival are not null, insert into Date table and get IDs
+        if actual_departure != "\\N" and actual_arrival != "\\N":
+            datawarehouse_cursor.execute("INSERT INTO Date (minute, hour, day, weekday, week, month, year) VALUES (?, ?, ?, ?, ?, ?, ?)", actual_departure_date)
+            actual_departure_date_id = datawarehouse_cursor.lastrowid
+            datawarehouse_cursor.execute("INSERT INTO Date (minute, hour, day, weekday, week, month, year) VALUES (?, ?, ?, ?, ?, ?, ?)", actual_arrival_date)
+            actual_arrival_date_id = datawarehouse_cursor.lastrowid
+        # Insert into Flight table
+        flight_revenue = 0 # TODO
+        seat_occupancy = 0 # TODO
+        qstr = "INSERT INTO Flight (flight_id, flight_no, status, scheduled_duration, actual_duration, flight_revenue, seat_occupancy"
+        qstr += ", aircraft, sched_departure, sched_arrival, actual_departure, actual_arrival, dep_airport, arr_airport"
+        qstr += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        datawarehouse_cursor.execute(qstr, (
+            row["flight_id"], row["flight_no"], row["status"], scheduled_duration, actual_duration, flight_revenue, seat_occupancy,
+            row["aircraft_code"], scheduled_departure_date_id, scheduled_arrival_date_id, actual_departure_date_id, actual_arrival_date_id,
+            row["departure_airport"], row["arrival_airport"]
+        ))
 
     print("Committing changes...")
     # Save & commit
