@@ -3,6 +3,7 @@
 
 json "Ticket" as ticket {
     "PK": "Ticket Number",
+    "FK1": "Booking Reference",
     "": ["Passenger ID"]
 }
 
@@ -13,7 +14,8 @@ json "Aircraft" as aircraft {
 
 json "Aircraft Seat" as seat {
     "PK": "Seat ID",
-    "": ["Aircraft Code", "Model", "Range", "Seat Number", "Fare Condition"]
+    "FK1": "Aircraft Code",
+    "": ["Seat Number", "Fare Condition"]
 }
 
 json "Airport" as airport {
@@ -23,7 +25,7 @@ json "Airport" as airport {
 
 json "Date" as date {
     "PK": "Date ID",
-    "": ["Minute", "Hour", "Day", "Weekday", "Week", "Month", "Year", "Date Value"]
+    "": ["Minute", "Hour", "Day", "Weekday", "Week", "Month", "Year"]
 }
 
 ' Flight Number and Status are a degenerate dimension
@@ -53,8 +55,8 @@ flight -u-> aircraft
 
 json "Booking" as booking #DarkGray {
     "PK": "Booking Reference",
-    "": ["Amount", "Number of Tickets"],
-    "FK1": "Booking Date"
+    "FK1": "Booking Date",
+    "": ["Amount"]
 }
 
 booking --> date

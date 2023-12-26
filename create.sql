@@ -1,4 +1,3 @@
--- Drop tables
 DROP TABLE IF EXISTS Date;
 DROP TABLE IF EXISTS Aircraft;
 DROP TABLE IF EXISTS Airport;
@@ -9,19 +8,15 @@ DROP TABLE IF EXISTS Aircraft_Seat;
 DROP TABLE IF EXISTS Flight_DIM;
 DROP TABLE IF EXISTS Boarding_Pass;
 
-
-
-
 CREATE TABLE Date (
     date_id INTEGER PRIMARY KEY AUTOINCREMENT, 
     minute INTEGER, 
     hour INTEGER, 
     day INTEGER, 
-    weekday TEXT, 
-    week INT, 
-    month TEXT, 
-    year INT,
-    date_value DATE UNIQUE
+    weekday INTEGER, 
+    week INTEGER, 
+    month INTEGER,
+    year INTEGER
 );
 
 CREATE TABLE Aircraft (
@@ -37,7 +32,6 @@ CREATE TABLE Airport (
     longitude REAL,
     city TEXT,
     timezone TEXT
-    --FOREIGN KEY (location) REFERENCES Location(location_id)
 );
 
 CREATE TABLE Flight (
@@ -65,16 +59,17 @@ CREATE TABLE Flight (
 );
 
 CREATE TABLE Booking (
-    booking_ref TEXT PRIMARY KEY, 
+    book_ref TEXT PRIMARY KEY, 
     amount REAL, 
-    no_tickets INTEGER,
-    date TEXT,
+    date INTEGER,
     FOREIGN KEY (date) REFERENCES Date(date_id)
 );
 
 CREATE TABLE Ticket (
     ticket_no TEXT PRIMARY KEY, 
-    passenger_id TEXT
+    passenger_id TEXT,
+    book_ref TEXT,
+    FOREIGN KEY (book_ref) REFERENCES Booking(book_ref)
 );
 
 CREATE TABLE Aircraft_Seat (
@@ -82,8 +77,7 @@ CREATE TABLE Aircraft_Seat (
     seat_no TEXT,
     fare_condition TEXT,
     aircraft_code TEXT, 
-    model TEXT, 
-    range INTEGER
+    FOREIGN KEY (aircraft_code) REFERENCES Aircraft(aircraft_code)
 );
 
 CREATE TABLE Flight_DIM (
@@ -93,7 +87,6 @@ CREATE TABLE Flight_DIM (
     scheduled_duration REAL,
     actual_duration REAL
 );
-
 
 CREATE TABLE Boarding_Pass (
     bpass_id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -120,10 +113,3 @@ CREATE TABLE Boarding_Pass (
     FOREIGN KEY (seat) REFERENCES Aircraft_Seat(seat_id),
     FOREIGN KEY (flight) REFERENCES Flight_DIM(flight_id)
 );
-
-
-
-
-
-
-
