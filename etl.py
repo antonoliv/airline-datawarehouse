@@ -108,13 +108,7 @@ try:
     query = "SELECT * FROM tickets"
     tickets = pd.read_sql_query(query, sqlite_conn)
     tickets = tickets[["ticket_no", "passenger_id", "book_ref"]]
-    # Save book ref of each ticket in a list
-    book_refs = tickets["book_ref"].unique().tolist()
-
-    # query = "SELECT * FROM ticket_flights"
-    # ticket_flights = pd.read_sql_query(query, sqlite_conn)
-    # ticket_flights = ticket_flights[["ticket_no", "flight_id", "amount"]]
-
+    
     print("5. Bookings")
     # book_date becomes a unique Date into Date table
     query = "SELECT * FROM bookings"
@@ -131,7 +125,7 @@ try:
         # Get the ID of the date
         date_id = datawarehouse_cursor.lastrowid
         # Get total number of tickets for this booking ref
-        num_tickets = tickets.loc[tickets["book_ref"] == row["book_ref"]].shape[0]
+        num_tickets = 0 # TODO
         # Insert into Booking table
         datawarehouse_cursor.execute("INSERT INTO Booking (book_ref, date, total_amount, num_tickets) VALUES (?, ?, ?, ?)", (row["book_ref"], date_id, row["total_amount"], num_tickets))
 
