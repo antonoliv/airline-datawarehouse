@@ -201,9 +201,6 @@ try:
         ticket_no = row["ticket_no"]
         ticket_info = tickets.loc[tickets["ticket_no"] == ticket_no].iloc[0]
         book_ref = ticket_info["book_ref"]
-        # Get the date of the booking
-        booking_info = bookings.loc[bookings["book_ref"] == book_ref].iloc[0]
-        date_id = booking_info["date"]
         # Get the flight info
         flight_id = row["flight_id"]
         flight_info = flights.loc[flights["flight_id"] == flight_id].iloc[0]
