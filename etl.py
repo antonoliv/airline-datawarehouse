@@ -209,16 +209,12 @@ try:
         # Get the flight info
         flight_id = row["flight_id"]
         flight_info = flights.loc[flights["flight_id"] == flight_id].iloc[0] # Slow operation !!!!!
-        scheduled_departure_date = flight_info["sched_departure"]
-        scheduled_arrival_date = flight_info["sched_arrival"]
-        actual_departure_date = flight_info["actual_departure"]
-        actual_arrival_date = flight_info["actual_arrival"]
         # Insert into Boarding_Pass
         amount = 0 # TODO
         qstr = "INSERT INTO Boarding_Pass (amount, ticket, seat, boarding_number, sched_departure, sched_arrival, actual_departure, actual_arrival, dep_airport, arr_airport, flight, aircraft)"
         qstr += " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         datawarehouse_cursor.execute(qstr, (
-            amount, ticket_no, row["seat_no"], row["boarding_no"], scheduled_departure_date, scheduled_arrival_date, actual_departure_date, actual_arrival_date,
+            amount, ticket_no, row["seat_no"], row["boarding_no"], int(flight_info["sched_departure"]), int(flight_info["sched_arrival"]), int(flight_info["actual_departure"]), int(flight_info["actual_arrival"]),
             flight_info["dep_airport"], flight_info["arr_airport"], flight_id, flight_info["aircraft"]
         ))
         if index % 1000 == 0:
