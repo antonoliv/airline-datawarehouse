@@ -192,10 +192,14 @@ try:
     boarding_passes = pd.read_sql_query(query, sqlite_conn)
     boarding_passes = boarding_passes[["ticket_no", "flight_id", "boarding_no", "seat_no"]]
 
+    # Commit changes to Data Warehouse
+    print("Committing changes 1...")
+    datawarehouse_conn.commit()
+
     # Read from new Flights table
     query = "SELECT * FROM Flight"
     flights = pd.read_sql_query(query, datawarehouse_conn)
-    flights = flights[["flight_id", "sched_departure", "sched_arrival", "dep_airport", "arr_airport", "aircraft", "actual_departure", "actual_arrival"]]
+    flights = flights[["flight_id", "sched_departure", "sched_arrival", "actual_departure", "actual_arrival", "dep_airport", "arr_airport", "aircraft"]]
 
     # For each boarding pass, get the ticket info and insert into Boarding_Pass
     print("Inserting boarding passes...")
@@ -220,7 +224,7 @@ try:
         if index % 1000 == 0:
             print(f"{index}/{total_boarding_passes} boarding passes inserted")
 
-    print("Committing changes...")
+    print("Committing changes 2...")
     # Save & commit
     datawarehouse_conn.commit()
 
