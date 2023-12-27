@@ -199,11 +199,12 @@ try:
 
     # For each boarding pass, get the ticket info and insert into Boarding_Pass
     print("Inserting boarding passes...")
+    total_boarding_passes = len(boarding_passes)
     for index, row in boarding_passes.iterrows():
         ticket_no = row["ticket_no"]
         # Get the flight info
         flight_id = row["flight_id"]
-        flight_info = flights.loc[flights["flight_id"] == flight_id].iloc[0]
+        flight_info = flights.loc[flights["flight_id"] == flight_id].iloc[0] # Slow operation !!!!!
         scheduled_departure_date = flight_info["sched_departure"]
         scheduled_arrival_date = flight_info["sched_arrival"]
         actual_departure_date = flight_info["actual_departure"]
@@ -216,6 +217,8 @@ try:
             amount, ticket_no, row["seat_no"], row["boarding_no"], scheduled_departure_date, scheduled_arrival_date, actual_departure_date, actual_arrival_date,
             flight_info["dep_airport"], flight_info["arr_airport"], flight_id, flight_info["aircraft"]
         ))
+        if index % 1000 == 0:
+            print(f"{index}/{total_boarding_passes} boarding passes inserted")
 
     print("Committing changes...")
     # Save & commit
