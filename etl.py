@@ -191,30 +191,30 @@ try:
     query = "SELECT * FROM boarding_passes"
     boarding_passes = pd.read_sql_query(query, sqlite_conn)
     boarding_passes = boarding_passes[["ticket_no", "flight_id", "boarding_no", "seat_no"]]
-    query = "SELECT * FROM flights"
-    flights = pd.read_sql_query(query, sqlite_conn)
-    flights = flights[["flight_id", "scheduled_departure", "scheduled_arrival", "departure_airport", "arrival_airport", "aircraft_code", "actual_departure", "actual_arrival"]]
+
+    # Read from new Flights table
+    query = "SELECT * FROM Flight"
+    flights = pd.read_sql_query(query, datawarehouse_conn)
+    flights = flights[["flight_id", "sched_departure", "sched_arrival", "dep_airport", "arr_airport", "aircraft", "actual_departure", "actual_arrival"]]
 
     # For each boarding pass, get the ticket info and insert into Boarding_Pass
     print("Inserting boarding passes...")
     for index, row in boarding_passes.iterrows():
         ticket_no = row["ticket_no"]
-        ticket_info = tickets.loc[tickets["ticket_no"] == ticket_no].iloc[0]
-        book_ref = ticket_info["book_ref"]
         # Get the flight info
         flight_id = row["flight_id"]
         flight_info = flights.loc[flights["flight_id"] == flight_id].iloc[0]
-        scheduled_departure_date = flight_info["scheduled_departure_parsed"]
-        scheduled_arrival_date = flight_info["scheduled_arrival_parsed"]
-        actual_departure_date = flight_info["actual_departure_parsed"]
-        actual_arrival_date = flight_info["actual_arrival_parsed"]
+        scheduled_departure_date = flight_info["sched_departure"]
+        scheduled_arrival_date = flight_info["sched_arrival"]
+        actual_departure_date = flight_info["actual_departure"]
+        actual_arrival_date = flight_info["actual_arrival"]
         # Insert into Boarding_Pass
         amount = 0 # TODO
         qstr = "INSERT INTO Boarding_Pass (amount, ticket, seat, boarding_number, sched_departure, sched_arrival, actual_departure, actual_arrival, dep_airport, arr_airport, flight, aircraft)"
         qstr += " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         datawarehouse_cursor.execute(qstr, (
             amount, ticket_no, row["seat_no"], row["boarding_no"], scheduled_departure_date, scheduled_arrival_date, actual_departure_date, actual_arrival_date,
-            flight_info["departure_airport"], flight_info["arrival_airport"], flight_id, flight_info["aircraft_code"]
+            flight_info["dep_airport"], flight_info["arr_airport"], flight_id, flight_info["aircraft"]
         ))
 
     print("Committing changes...")
