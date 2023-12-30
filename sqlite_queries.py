@@ -37,7 +37,7 @@ cur = conn.cursor()
 # Print results of query
 
 # debug off = 0, else debug = query number
-debug = 1
+debug = 3
 
 if debug == 0:
     print("Please select one of the following queries to run:")
@@ -76,12 +76,11 @@ if user_input == "1":
     print("------- Query 1 Results -------")
     print(df.to_string(index=False))
 
-# Todo: Query 2
+# Todo: Query 2 | Note: How do we get the day of the week from a boarding pass? Boarding passes dont have a date ??
 elif user_input == "2":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 2...")
 
-    # Todo: Note: How do we get the day of the week from a boarding pass? Boarding passes dont have a date ??
     query = ''
 
     # Execute, store, and print query
@@ -90,17 +89,33 @@ elif user_input == "2":
     print("------- Query 2 Results -------")
     print(df.to_string(index=False))
 
-# Todo: Query 3
+# Todo: Query 3 | Note: Not sure if the query is correct, because boarding passes dont have amount
 elif user_input == "3":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 3...")
 
-    query = ''
+    query = '''
+    SELECT 
+        d.weekday,
+        b.arr_airport,
+        SUM(b.amount) AS total_amount
+    FROM 
+        Boarding_Pass b
+    JOIN 
+        Date d ON b.sched_departure = d.date_id
+    GROUP BY 
+        b.arr_airport, d.weekday
+    ORDER BY 
+        d.weekday, b.arr_airport;
+    '''
 
     # Execute, store, and print query
     df = pd.read_sql_query(query, conn)
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 3 Results -------")
+    print("Assuming 0 is Monday, and 6 is Sunday")
+    # Change all 0's to Monday, 1's to Tuesday, etc.
+    df['weekday'] = df['weekday'].replace([0,1,2,3,4,5,6],['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])
     print(df.to_string(index=False))
 
 # Todo: Query 4
