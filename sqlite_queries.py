@@ -54,8 +54,9 @@ if debug == 0:
 else:
     user_input = str(debug)
 
-# Run query based on user input
-if user_input == "1": # Query 1 | Todo: Check if 3rd column is correct
+
+# Query 1 | Todo: Check if 3rd column is correct
+if user_input == "1":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 1...")
 
@@ -69,11 +70,61 @@ if user_input == "1": # Query 1 | Todo: Check if 3rd column is correct
     GROUP BY aircraft
     '''
 
-    # Execute query and store results in a dataframe, then print the dataframe
+    # Execute, store, and print query
     df = pd.read_sql_query(query, conn)
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 1 Results -------")
     print(df.to_string(index=False))
 
+# Todo: Query 2
+elif user_input == "2":
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("Running query 2...")
 
+    # Todo: Note: How do we get the day of the week from a boarding pass? Boarding passes dont have a date ??
+    query = ''
 
+    # Execute, store, and print query
+    df = pd.read_sql_query(query, conn)
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("------- Query 2 Results -------")
+    print(df.to_string(index=False))
+
+# Todo: Query 3
+elif user_input == "3":
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("Running query 3...")
+
+    query = ''
+
+    # Execute, store, and print query
+    df = pd.read_sql_query(query, conn)
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("------- Query 3 Results -------")
+    print(df.to_string(index=False))
+
+# Todo: Query 4
+elif user_input == "4":
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("Running query 4...")
+
+    query = ''
+
+    # Execute, store, and print query
+    df = pd.read_sql_query(query, conn)
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("------- Query 4 Results -------")
+    print(df.to_string(index=False))
+
+# Todo: Query 5
+elif user_input == "5":
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("Running query 5...")
+
+    query = ''
+
+    # Execute, store, and print query
+    df = pd.read_sql_query(query, conn)
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("------- Query 5 Results -------")
+    print(df.to_string(index=False))
