@@ -37,7 +37,7 @@ cur = conn.cursor()
 # Print results of query
 
 # debug off = 0, else debug = query number
-debug = 4
+debug = 0
 
 if debug == 0:
     print("Please select one of the following queries to run:")
@@ -114,7 +114,6 @@ elif user_input == "3":
     df = pd.read_sql_query(query, conn)
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 3 Results -------")
-    print("Assuming 0 is Monday, and 6 is Sunday")
     # Change all 0's to Monday, 1's to Tuesday, etc.
     df['weekday'] = df['weekday'].replace([0,1,2,3,4,5,6],['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])
     print(df.to_string(index=False))
@@ -147,15 +146,30 @@ elif user_input == "4":
     print("------- Query 4 Results -------")
     print(df.to_string(index=False))
 
-# Todo: Query 5
+# Todo: Query 5 | Note: Not sure if the query is correct, because boarding passes dont have amount.
+# Also, i think this is the "tickets per booking", and not "boarding passes per booking"
 elif user_input == "5":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 5...")
 
-    query = ''
+    query = '''
+    SELECT
+        d.weekday,
+        AVG(b.num_tickets) AS avg_boarding_passes_per_booking
+    FROM
+        Booking b
+    JOIN
+        Date d ON b.date = d.date_id
+    GROUP BY
+        d.weekday
+    ORDER BY
+        d.weekday;
+    '''
 
     # Execute, store, and print query
     df = pd.read_sql_query(query, conn)
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 5 Results -------")
+    # Change all 0's to Monday, 1's to Tuesday, etc.
+    df['weekday'] = df['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     print(df.to_string(index=False))
