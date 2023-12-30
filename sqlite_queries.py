@@ -36,31 +36,36 @@ cur = conn.cursor()
 # Ask user what query they want to run
 # Print results of query
 
-print("Please select one of the following queries to run:")
-print("-----------------------------------------------")
-print("1 -- Get, for each aircraft, get the number of on time flights, late flights, and cancelled flights")
-print("2 -- Get the average number of boarding passes for each day of the week")
-print("3 -- Get the average revenue for each arrival airport")
-print("4 -- Get, for each arrival airport, the number of First, Business, and Economy class seats.")
-print("5 -- Get the average number of boarding passes per booking for each day of the week")
+# debug off = 0, else debug = query number
+debug = 1
 
-# Get user input
-user_input = input("\nEnter the number of the query you want to run: ")
+if debug == 0:
+    print("Please select one of the following queries to run:")
+    print("-----------------------------------------------")
+    print("1 -- Get, for each aircraft, get the number of on time flights, late flights, and cancelled flights")
+    print("2 -- Get the average number of boarding passes for each day of the week")
+    print("3 -- Get the average revenue for each arrival airport")
+    print("4 -- Get, for each arrival airport, the number of First, Business, and Economy class seats.")
+    print("5 -- Get the average number of boarding passes per booking for each day of the week")
+
+    # Get user input
+    user_input = input("\nEnter the number of the query you want to run: ")
+
+else:
+    user_input = str(debug)
 
 # Run query based on user input
-if user_input == "1":
+if user_input == "1": # Query 1 | Todo: Check if 3rd column is correct
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 1...")
 
-    # 1.1) % of on time flights per aircraft
-    # Query that for each "aircraft", gets the number of on time flights (ie flights where scheduled_departure <= actual_departure) that have "status" as "Arrived" or "On Time"
-    # Table "Flight" has the following important columns: status, aircraft, sched_departure, actual_departure
-
     query = '''
-    SELECT aircraft, COUNT(*) AS on_time_flights
+    SELECT 
+        aircraft, 
+        COUNT(CASE WHEN sched_departure <= actual_departure AND (status = "Arrived" OR status = "On Time") THEN 1 END) AS on_time_flights,
+        COUNT(CASE WHEN sched_departure > actual_departure AND (status = "Arrived" OR status = "On Time") THEN 1 END) AS late_flights,
+        COUNT(CASE WHEN status = "Cancelled" THEN 1 END) AS cancelled_flights
     FROM Flight
-    WHERE status = "Arrived" OR status = "On Time"
-    AND sched_departure <= actual_departure
     GROUP BY aircraft
     '''
 
@@ -68,7 +73,7 @@ if user_input == "1":
     df = pd.read_sql_query(query, conn)
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 1 Results -------")
-    print(df)
+    print(df.to_string(index=False))
 
 
 
