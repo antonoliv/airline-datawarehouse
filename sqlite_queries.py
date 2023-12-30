@@ -37,14 +37,14 @@ cur = conn.cursor()
 # Print results of query
 
 # debug off = 0, else debug = query number
-debug = 3
+debug = 4
 
 if debug == 0:
     print("Please select one of the following queries to run:")
     print("-----------------------------------------------")
     print("1 -- Get, for each aircraft, get the number of on time flights, late flights, and cancelled flights")
-    print("2 -- Get the average number of boarding passes for each day of the week")
-    print("3 -- Get the average revenue for each arrival airport")
+    print("2 -- Get the average number of boarding passes, for each day of the week")
+    print("3 -- Get the average revenue for each arrival airport, for each day of the week")
     print("4 -- Get, for each arrival airport, the number of First, Business, and Economy class seats.")
     print("5 -- Get the average number of boarding passes per booking for each day of the week")
 
@@ -60,6 +60,7 @@ if user_input == "1":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 1...")
 
+    # Todo: Could use aircraft name instead of aircraft id ?? No need to complicate things imo
     query = '''
     SELECT 
         aircraft, 
@@ -89,7 +90,7 @@ elif user_input == "2":
     print("------- Query 2 Results -------")
     print(df.to_string(index=False))
 
-# Todo: Query 3 | Note: Not sure if the query is correct, because boarding passes dont have amount
+# Query 3 | Note: Not sure if the query is correct, because boarding passes dont have amount
 elif user_input == "3":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 3...")
@@ -123,7 +124,22 @@ elif user_input == "4":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 4...")
 
-    query = ''
+
+    # Todo | Note: What is the time period? Eg: First class tickets in airport X... ...in the last 2 years? ... average per day of week?
+    # Todo: fix this, this is wrong.
+    query = '''
+    SELECT 
+        b.arr_airport,
+        SUM(CASE WHEN a.fare_condition = 'First' THEN 1 ELSE 0 END) AS first_class_seats,
+        SUM(CASE WHEN a.fare_condition = 'Business' THEN 1 ELSE 0 END) AS business_class_seats,
+        SUM(CASE WHEN a.fare_condition = 'Economy' THEN 1 ELSE 0 END) AS economy_class_seats
+    FROM 
+        Boarding_Pass b
+    JOIN 
+        Aircraft_Seat a ON b.seat = a.seat_id
+    GROUP BY 
+        b.arr_airport;
+    '''
 
     # Execute, store, and print query
     df = pd.read_sql_query(query, conn)
