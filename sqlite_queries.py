@@ -18,8 +18,8 @@
 # 4.2) Number of Business class seats for each arrival airport
 # 4.3) Number of Economy class seats for each arrival airport
 
-# 5) Number of Boarding passes per booking (not per ticket)
-# 5.1) Avg. boarding passes, per booking, for each day of the week
+# 5) Number of tickets per booking
+# 5.1) Avg. tickets, per booking, for each day of the week
 
 
 
@@ -146,8 +146,7 @@ elif user_input == "4":
     print("------- Query 4 Results -------")
     print(df.to_string(index=False))
 
-# Todo: Query 5 | Note: Not sure if the query is correct, because boarding passes dont have amount.
-# Also, i think this is the "tickets per booking", and not "boarding passes per booking"
+# Todo: Query 5
 elif user_input == "5":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 5...")
