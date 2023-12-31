@@ -115,7 +115,7 @@ elif user_input == "2":
     query2 = '''
     SELECT 
         weekday,
-        AVG(num_boarding_passes) AS average_boarding_passes
+        ROUND(AVG(num_boarding_passes), 2) AS average_boarding_passes
     FROM (
         SELECT 
             d.weekday AS weekday,
