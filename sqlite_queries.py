@@ -77,16 +77,30 @@ if user_input == "1":
     print("------- Query 1 Results -------")
     print(df.to_string(index=False))
 
-# Todo: -- Query 2 --
-# | Note: How do we get the day of the week from a boarding pass? Boarding passes dont have a date ??
+# -- Query 2 --
+# Todo: | Note: Not sure if this is correct. Number seems too low
 elif user_input == "2":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 2...")
 
-    query = ''
+    query = '''
+    SELECT 
+        d.weekday,
+        CAST(COUNT(*) AS FLOAT) / COUNT(DISTINCT d.date_id) AS avg_boarding_passes_per_day
+    FROM 
+        Boarding_Pass b
+    JOIN 
+        Date d ON b.sched_departure = d.date_id
+    GROUP BY 
+        d.weekday
+    ORDER BY 
+        d.weekday;
+    '''
 
     # Execute, store, and print query
     df = pd.read_sql_query(query, conn)
+    # Change all 0's to Monday, 1's to Tuesday, etc.
+    df['weekday'] = df['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 2 Results -------")
     print(df.to_string(index=False))
@@ -120,7 +134,7 @@ elif user_input == "3":
     df['weekday'] = df['weekday'].replace([0,1,2,3,4,5,6],['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])
     print(df.to_string(index=False))
 
-# Todo: -- Query 4 --
+# -- Query 4 --
 elif user_input == "4":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
 
