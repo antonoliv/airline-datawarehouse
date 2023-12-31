@@ -264,7 +264,7 @@ elif user_input == "5":
     query = '''
     SELECT
         d.weekday,
-        AVG(b.num_tickets) AS avg_boarding_passes_per_booking
+        ROUND(AVG(b.num_tickets), 3) AS avg_boarding_passes_per_booking
     FROM
         Booking b
     JOIN
