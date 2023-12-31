@@ -78,7 +78,7 @@ if user_input == "1":
     print(df.to_string(index=False))
 
     # Export to csv and excel file
-    df.to_csv("query1-results.csv")
+    # df.to_csv("query1-results.csv")
     df.to_excel("query1-results.xlsx")
 
 # ----------- Query 2 -----------
@@ -177,7 +177,7 @@ elif user_input == "3":
     print(df.to_string(index=False))
 
     # Export to csv and excel file
-    df.to_csv("query3-results.csv")
+    # df.to_csv("query3-results.csv")
     df.to_excel("query3-results.xlsx")
 
 # ----------- Query 4 -----------
@@ -284,6 +284,6 @@ elif user_input == "5":
     print(df.to_string(index=False))
 
     # Export to csv and excel file
-    df.to_csv("query5-results.csv")
+    # df.to_csv("query5-results.csv")
     df.to_excel("query5-results.xlsx")
 
