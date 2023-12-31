@@ -55,12 +55,12 @@ else:
     user_input = str(debug)
 
 
-# Query 1 | Todo: Check if 3rd column is correct
+# -- Query 1 --
+# Todo: Check if 3rd column is correct
 if user_input == "1":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 1...")
 
-    # Todo: Could use aircraft name instead of aircraft id ?? No need to complicate things imo
     query = '''
     SELECT 
         aircraft, 
@@ -77,7 +77,8 @@ if user_input == "1":
     print("------- Query 1 Results -------")
     print(df.to_string(index=False))
 
-# Todo: Query 2 | Note: How do we get the day of the week from a boarding pass? Boarding passes dont have a date ??
+# Todo: -- Query 2 --
+# | Note: How do we get the day of the week from a boarding pass? Boarding passes dont have a date ??
 elif user_input == "2":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 2...")
@@ -90,7 +91,8 @@ elif user_input == "2":
     print("------- Query 2 Results -------")
     print(df.to_string(index=False))
 
-# Query 3 | Note: Not sure if the query is correct, because boarding passes dont have amount
+# -- Query 3 --
+# | Note: Not sure if the query is correct, because boarding passes dont have amount
 elif user_input == "3":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 3...")
@@ -118,35 +120,43 @@ elif user_input == "3":
     df['weekday'] = df['weekday'].replace([0,1,2,3,4,5,6],['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])
     print(df.to_string(index=False))
 
-# Todo: Query 4
+# Todo: -- Query 4 --
 elif user_input == "4":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-    print("Running query 4...")
+    print("Running query 4... (This query takes a while to run)")
 
 
     # Todo | Note: What is the time period? Eg: First class tickets in airport X... ...in the last 2 years? ... average per day of week?
     # Todo: fix this, this is wrong.
     query = '''
     SELECT 
+        d.month,
         b.arr_airport,
-        SUM(CASE WHEN a.fare_condition = 'First' THEN 1 ELSE 0 END) AS first_class_seats,
+        SUM(CASE WHEN a.fare_condition = 'Economy' THEN 1 ELSE 0 END) AS economy_class_seats,
         SUM(CASE WHEN a.fare_condition = 'Business' THEN 1 ELSE 0 END) AS business_class_seats,
-        SUM(CASE WHEN a.fare_condition = 'Economy' THEN 1 ELSE 0 END) AS economy_class_seats
+        SUM(CASE WHEN a.fare_condition = 'First' THEN 1 ELSE 0 END) AS first_class_seats
+        
     FROM 
         Boarding_Pass b
     JOIN 
-        Aircraft_Seat a ON b.seat = a.seat_id
+        Aircraft_Seat a ON b.seat = a.seat_no
+    JOIN 
+        Date d ON b.sched_departure = d.date_id
     GROUP BY 
-        b.arr_airport;
+        d.month, b.arr_airport
+    ORDER BY 
+        d.month, b.arr_airport;
     '''
 
     # Execute, store, and print query
     df = pd.read_sql_query(query, conn)
+    # Change all 0's to January, 1's to February, etc.
+    df['month'] = df['month'].replace([1,2,3,4,5,6,7,8,9,10,11,12],['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'])
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 4 Results -------")
     print(df.to_string(index=False))
 
-# Todo: Query 5
+# -- Query 5 --
 elif user_input == "5":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 5...")
