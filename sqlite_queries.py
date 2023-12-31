@@ -8,7 +8,7 @@
 # 1.3) Number of cancelled flights
 
 # 2) Average boarding passes per time unit
-# 2.1) Number of boarding passes for each day of the week? (Edit: Boarding passes dont have a date, so this is not possible??)
+# 2.1) Number of boarding passes for each day of the week?
 
 # 3) Arrival airport average revenue
 # 3.1) $ for each day of the week, for each arrival airport
@@ -26,7 +26,7 @@
 # ---------------------------------------- Main Screen ---------------------------------------- #
 import sqlite3
 import pandas as pd
-import numpy as np
+import openpyxl
 
 # Connect to database
 conn = sqlite3.connect('datawarehouse.sqlite')
@@ -55,7 +55,7 @@ else:
     user_input = str(debug)
 
 
-# -- Query 1 --
+# ----------- Query 1 -----------
 # Todo: Check if 3rd column is correct
 if user_input == "1":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
@@ -77,14 +77,18 @@ if user_input == "1":
     print("------- Query 1 Results -------")
     print(df.to_string(index=False))
 
-# -- Query 2 --
+    # Export to csv and excel file
+    df.to_csv("query1-results.csv")
+    df.to_excel("query1-results.xlsx")
+
+# ----------- Query 2 -----------
 # Todo: | Note: Not sure if this is correct. Number seems too low
 elif user_input == "2":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 2...")
 
     # Total number of boarding passes for each day of the week
-    query = '''
+    query1 = '''
     SELECT 
         d.weekday,
         COUNT(*) AS num_boarding_passes
@@ -99,16 +103,16 @@ elif user_input == "2":
     '''
 
     # Execute, store, and print query
-    df = pd.read_sql_query(query, conn)
+    df1 = pd.read_sql_query(query1, conn)
     # Change all 0's to Monday, 1's to Tuesday, etc.
-    df['weekday'] = df['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+    df1['weekday'] = df1['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 2 Results -------")
     print("Total number of boarding passes for each day of the week")
-    print(df.to_string(index=False))
+    print(df1.to_string(index=False))
 
     # Average number of boarding passes for each day of the week
-    query = '''
+    query2 = '''
     SELECT 
         weekday,
         AVG(num_boarding_passes) AS average_boarding_passes
@@ -130,14 +134,20 @@ elif user_input == "2":
     '''
 
     # Execute, store, and print query
-    df = pd.read_sql_query(query, conn)
+    df2 = pd.read_sql_query(query2, conn)
     # Change all 0's to Monday, 1's to Tuesday, etc.
-    df['weekday'] = df['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+    df2['weekday'] = df2['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     print("--------------------------")
     print("Average number of boarding passes for each day of the week")
-    print(df.to_string(index=False))
+    print(df2.to_string(index=False))
 
-# -- Query 3 --
+
+    # Export to csv and excel file. Query 1 results are in sheet 1, query 2 results are in sheet 2
+    with pd.ExcelWriter('query2-results.xlsx') as writer:
+        df1.to_excel(writer, sheet_name='Query 1')
+        df2.to_excel(writer, sheet_name='Query 2')
+
+# ----------- Query 3 -----------
 # | Note: Not sure if the query is correct, because boarding passes dont have amount
 elif user_input == "3":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
@@ -166,10 +176,14 @@ elif user_input == "3":
     df['weekday'] = df['weekday'].replace([0,1,2,3,4,5,6],['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])
     print(df.to_string(index=False))
 
-# -- Query 4 --
+    # Export to csv and excel file
+    df.to_csv("query3-results.csv")
+    df.to_excel("query3-results.xlsx")
+
+# ----------- Query 4 -----------
 elif user_input == "4":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-
+    print("Running query 4... (This query takes a while to run)")
 
     # Query Version 1: For each month of the year
     query1 = '''
@@ -191,6 +205,9 @@ elif user_input == "4":
     ORDER BY 
         b.arr_airport, d.month;
     '''
+    df1 = pd.read_sql_query(query1, conn)
+    df1['month'] = df1['month'].replace([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+
 
     # Query Version 2: For each day of the week
     query2 = '''
@@ -212,36 +229,34 @@ elif user_input == "4":
         b.arr_airport, d.weekday;
     '''
 
+    print("Still running......")
+    df2 = pd.read_sql_query(query2, conn)
+    df2['weekday'] = df2['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
 
     # Ask user if they want to run query for each month or each day of the week
-    print("Do you want to run the query for each month or each day of the week?")
+    print("Do you want to print the query for each month or each day of the week?")
     print("1 -- For each month")
     print("2 -- For each day of the week")
     user_input2 = input("\nEnter the number of the query you want to run: ")
     if user_input2 == "1":
-        query = query1
+        print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+        print("------- Query 4 Results -------")
+        print(df1.to_string(index=False))
     elif user_input2 == "2":
-        query = query2
+        print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+        print("------- Query 4 Results -------")
+        print(df2.to_string(index=False))
     else:
         print("Invalid input")
         exit()
 
-    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-    print("Running query 4... (This query takes a while to run)")
 
-    # Execute, store, and print query
-    df = pd.read_sql_query(query, conn)
-    # Change all 0's to January, 1's to February, etc.
-    if user_input2 == "1":
-        df['month'] = df['month'].replace([1,2,3,4,5,6,7,8,9,10,11,12],['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'])
-    # Change all 0's to Monday, 1's to Tuesday, etc.
-    elif user_input2 == "2":
-        df['weekday'] = df['weekday'].replace([0,1,2,3,4,5,6],['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])
-    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-    print("------- Query 4 Results -------")
-    print(df.to_string(index=False))
+    # Export to csv and excel file. Query 1 results are in sheet 1, query 2 results are in sheet 2
+    with pd.ExcelWriter('query4-results.xlsx') as writer:
+        df1.to_excel(writer, sheet_name='Query 1')
+        df2.to_excel(writer, sheet_name='Query 2')
 
-# -- Query 5 --
+# ----------- Query 5 -----------
 elif user_input == "5":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 5...")
@@ -267,3 +282,8 @@ elif user_input == "5":
     # Change all 0's to Monday, 1's to Tuesday, etc.
     df['weekday'] = df['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     print(df.to_string(index=False))
+
+    # Export to csv and excel file
+    df.to_csv("query5-results.csv")
+    df.to_excel("query5-results.xlsx")
+
