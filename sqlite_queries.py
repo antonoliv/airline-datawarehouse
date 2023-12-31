@@ -83,10 +83,11 @@ elif user_input == "2":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 2...")
 
+    # Total number of boarding passes for each day of the week
     query = '''
     SELECT 
         d.weekday,
-        CAST(COUNT(*) AS FLOAT) / COUNT(DISTINCT d.date_id) AS avg_boarding_passes_per_day
+        COUNT(*) AS num_boarding_passes
     FROM 
         Boarding_Pass b
     JOIN 
@@ -103,6 +104,37 @@ elif user_input == "2":
     df['weekday'] = df['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 2 Results -------")
+    print("Total number of boarding passes for each day of the week")
+    print(df.to_string(index=False))
+
+    # Average number of boarding passes for each day of the week
+    query = '''
+    SELECT 
+        weekday,
+        AVG(num_boarding_passes) AS average_boarding_passes
+    FROM (
+        SELECT 
+            d.weekday AS weekday,
+            COUNT(*) AS num_boarding_passes
+        FROM 
+            Boarding_Pass b
+        JOIN 
+            Date d ON b.sched_departure = d.date_id
+        GROUP BY 
+            b.sched_departure
+    ) AS counts
+    GROUP BY 
+        weekday
+    ORDER BY 
+        weekday;
+    '''
+
+    # Execute, store, and print query
+    df = pd.read_sql_query(query, conn)
+    # Change all 0's to Monday, 1's to Tuesday, etc.
+    df['weekday'] = df['weekday'].replace([0, 1, 2, 3, 4, 5, 6], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+    print("--------------------------")
+    print("Average number of boarding passes for each day of the week")
     print(df.to_string(index=False))
 
 # -- Query 3 --
