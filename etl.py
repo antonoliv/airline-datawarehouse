@@ -4,7 +4,7 @@
 
 # Requirement: You need the travel.sqlite dataset in the folder above this one.
 
-PATH_DATASET_SQLITE = "travel.sqlite"
+PATH_DATASET_SQLITE = "dataset/airline.sqlite"
 PATH_DATAWAREHOUSE_SQLITE = "datawarehouse.sqlite"
 PATH_DATAWAREHOUSE_CREATE_SQLITE = "create.sql"
 
@@ -114,6 +114,12 @@ try:
     query = "SELECT * FROM bookings"
     bookings = pd.read_sql_query(query, sqlite_conn)
     bookings = bookings[["book_ref", "book_date", "total_amount"]]
+    
+    n_tickets = tickets['book_ref'].value_counts().reset_index()
+    n_tickets.columns = ["book_ref", "num_tickets"]
+    
+    bookings = pd.merge(bookings, n_tickets, on="book_ref", how="left")
+
     print("Parsing dates...")
     bookings["book_date"] = bookings["book_date"].apply(lambda x: parse_date(x))
     # For each date, insert into Date table and apply the ID to the booking as date
@@ -125,9 +131,8 @@ try:
         # Get the ID of the date
         date_id = datawarehouse_cursor.lastrowid
         # Get total number of tickets for this booking ref
-        num_tickets = 0 # TODO
         # Insert into Booking table
-        datawarehouse_cursor.execute("INSERT INTO Booking (book_ref, date, total_amount, num_tickets) VALUES (?, ?, ?, ?)", (row["book_ref"], date_id, row["total_amount"], num_tickets))
+        datawarehouse_cursor.execute("INSERT INTO Booking (book_ref, date, total_amount, num_tickets) VALUES (?, ?, ?, ?)", (row["book_ref"], date_id, row["total_amount"], row['num_tickets']))
 
     # From flights create Flight and Flight_DIM
     print("6. Flights")
@@ -141,6 +146,34 @@ try:
     # parse actual dates if not \\N
     flights["actual_departure_parsed"] = flights["actual_departure"].apply(lambda x: parse_date(x) if x != "\\N" else x)
     flights["actual_arrival_parsed"] = flights["actual_arrival"].apply(lambda x: parse_date(x) if x != "\\N" else x)
+    
+
+    # Create Boarding_Pass
+    print("7. Boarding Pass")
+    query = "SELECT * FROM boarding_passes"
+    boarding_passes = pd.read_sql_query(query, sqlite_conn)
+    boarding_passes = boarding_passes[["ticket_no", "flight_id", "boarding_no", "seat_no"]]
+
+    
+    query = "SELECT * FROM ticket_flights"
+    tflights = pd.read_sql_query(query, sqlite_conn)
+    tflights = tflights[["ticket_no", "flight_id", "fare_conditions", "amount"]]
+    
+    revenue = tflights.groupby('flight_id')['amount'].sum().reset_index()
+    revenue.columns = ["flight_id", "flight_revenue"]
+
+    flights = pd.merge(flights, revenue, on="flight_id", how="left")
+
+    n_seats_flight = seats["aircraft_code"].value_counts().reset_index()
+    n_seats_flight.columns = ['aircraft_code', "available_seats"]
+    occ_seats_flight = boarding_passes['flight_id'].value_counts().reset_index()
+    occ_seats_flight.columns = ['flight_id', "occupied_seats"]
+
+    flights = pd.merge(flights, n_seats_flight, on="aircraft_code", how="left")
+    flights = pd.merge(flights, occ_seats_flight, on="flight_id", how="left")
+    flights['seat_occupancy'] = 0
+    flights["seat_occupancy"] = flights["occupied_seats"] / flights['available_seats'] * 100
+
     # For each flight, insert into Flight and Flight_DIM
     print("Inserting flights and dates...")
     for index, row in flights.iterrows():
@@ -181,25 +214,24 @@ try:
         qstr += ", aircraft, sched_departure, sched_arrival, actual_departure, actual_arrival, dep_airport, arr_airport"
         qstr += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         datawarehouse_cursor.execute(qstr, (
-            row["flight_id"], row["flight_no"], row["status"], scheduled_duration, actual_duration, flight_revenue, seat_occupancy,
+            row["flight_id"], row["flight_no"], row["status"], scheduled_duration, actual_duration, row['flight_revenue'], row['seat_occupancy'],
             row["aircraft_code"], scheduled_departure_date_id, scheduled_arrival_date_id, actual_departure_date_id, actual_arrival_date_id,
             row["departure_airport"], row["arrival_airport"]
         ))
 
-    # Create Boarding_Pass
-    print("7. Boarding Pass")
-    query = "SELECT * FROM boarding_passes"
-    boarding_passes = pd.read_sql_query(query, sqlite_conn)
-    boarding_passes = boarding_passes[["ticket_no", "flight_id", "boarding_no", "seat_no"]]
-
+   
     # Commit changes to Data Warehouse
     print("Committing changes 1...")
+
     datawarehouse_conn.commit()
 
     # Read from new Flights table
     query = "SELECT * FROM Flight"
     flights = pd.read_sql_query(query, datawarehouse_conn)
     flights = flights[["flight_id", "sched_departure", "sched_arrival", "actual_departure", "actual_arrival", "dep_airport", "arr_airport", "aircraft"]]
+    
+
+    
 
     # For each boarding pass, get the ticket info and insert into Boarding_Pass
     print("Inserting boarding passes...")
@@ -210,7 +242,8 @@ try:
         flight_id = row["flight_id"]
         flight_info = flights.loc[flights["flight_id"] == flight_id].iloc[0] # Slow operation !!!!!
         # Insert into Boarding_Pass
-        amount = 0 # TODO
+        # amount = tflights.loc[(tflights["ticket_no"] == row['ticket_no']) & (tflights["flight_id"] == row['flight_id'])].iloc[0]['amount']
+        amount = 0
         qstr = "INSERT INTO Boarding_Pass (amount, ticket, seat, boarding_number, sched_departure, sched_arrival, actual_departure, actual_arrival, dep_airport, arr_airport, flight, aircraft)"
         qstr += " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         datawarehouse_cursor.execute(qstr, (
