@@ -45,7 +45,7 @@ if debug == 0:
     print("1 -- Get, for each aircraft, get the number of on time flights, late flights, and cancelled flights")
     print("2 -- Get the average number of boarding passes, for each day of the week")
     print("3 -- Get the average revenue for each arrival airport, for each day of the week")
-    print("4 -- Get, for each arrival airport, the number of First, Business, and Economy class seats.")
+    print("4 -- Get, for each arrival airport, the number of First, Business, and Economy class seats, for each month and for each day of the week")
     print("5 -- Get the average number of boarding passes per booking for each day of the week")
 
     # Get user input
@@ -123,18 +123,16 @@ elif user_input == "3":
 # Todo: -- Query 4 --
 elif user_input == "4":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-    print("Running query 4... (This query takes a while to run)")
 
 
-    # Todo | Note: What is the time period? Eg: First class tickets in airport X... ...in the last 2 years? ... average per day of week?
-    # Todo: fix this, this is wrong.
-    query = '''
+    # Query Version 1: For each month of the year
+    query1 = '''
     SELECT 
-        d.month,
         b.arr_airport,
+        d.month,
         SUM(CASE WHEN a.fare_condition = 'Economy' THEN 1 ELSE 0 END) AS economy_class_seats,
         SUM(CASE WHEN a.fare_condition = 'Business' THEN 1 ELSE 0 END) AS business_class_seats,
-        SUM(CASE WHEN a.fare_condition = 'First' THEN 1 ELSE 0 END) AS first_class_seats
+        SUM(CASE WHEN a.fare_condition = 'Comfort' THEN 1 ELSE 0 END) AS comfort_class_seats
         
     FROM 
         Boarding_Pass b
@@ -145,13 +143,54 @@ elif user_input == "4":
     GROUP BY 
         d.month, b.arr_airport
     ORDER BY 
-        d.month, b.arr_airport;
+        b.arr_airport, d.month;
     '''
+
+    # Query Version 2: For each day of the week
+    query2 = '''
+    SELECT
+        b.arr_airport,
+        d.weekday,
+        SUM(CASE WHEN a.fare_condition = 'Economy' THEN 1 ELSE 0 END) AS economy_class_seats,
+        SUM(CASE WHEN a.fare_condition = 'Business' THEN 1 ELSE 0 END) AS business_class_seats,
+        SUM(CASE WHEN a.fare_condition = 'Comfort' THEN 1 ELSE 0 END) AS comfort_class_seats
+    FROM
+        Boarding_Pass b
+    JOIN
+        Aircraft_Seat a ON b.seat = a.seat_no
+    JOIN
+        Date d ON b.sched_departure = d.date_id
+    GROUP BY
+        d.weekday, b.arr_airport
+    ORDER BY
+        b.arr_airport, d.weekday;
+    '''
+
+
+    # Ask user if they want to run query for each month or each day of the week
+    print("Do you want to run the query for each month or each day of the week?")
+    print("1 -- For each month")
+    print("2 -- For each day of the week")
+    user_input2 = input("\nEnter the number of the query you want to run: ")
+    if user_input2 == "1":
+        query = query1
+    elif user_input2 == "2":
+        query = query2
+    else:
+        print("Invalid input")
+        exit()
+
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("Running query 4... (This query takes a while to run)")
 
     # Execute, store, and print query
     df = pd.read_sql_query(query, conn)
     # Change all 0's to January, 1's to February, etc.
-    df['month'] = df['month'].replace([1,2,3,4,5,6,7,8,9,10,11,12],['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'])
+    if user_input2 == "1":
+        df['month'] = df['month'].replace([1,2,3,4,5,6,7,8,9,10,11,12],['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'])
+    # Change all 0's to Monday, 1's to Tuesday, etc.
+    elif user_input2 == "2":
+        df['weekday'] = df['weekday'].replace([0,1,2,3,4,5,6],['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("------- Query 4 Results -------")
     print(df.to_string(index=False))
