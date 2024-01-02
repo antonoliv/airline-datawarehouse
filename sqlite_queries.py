@@ -61,14 +61,38 @@ if user_input == "1":
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     print("Running query 1...")
 
+
+    # Total amounts for each
+    # query = '''
+    # SELECT
+    #     aircraft,
+    #     COUNT(CASE WHEN sched_departure <= actual_departure AND (status = "Arrived" OR status = "On Time") THEN 1 END) AS on_time_flights,
+    #     COUNT(CASE WHEN sched_departure > actual_departure AND (status = "Arrived" OR status = "On Time") THEN 1 END) AS late_flights,
+    #     COUNT(CASE WHEN status = "Cancelled" THEN 1 END) AS cancelled_flights
+    # FROM Flight
+    # GROUP BY aircraft
+    # '''
+
+    # Percentages for each
     query = '''
     SELECT 
-        aircraft, 
-        COUNT(CASE WHEN sched_departure <= actual_departure AND (status = "Arrived" OR status = "On Time") THEN 1 END) AS on_time_flights,
-        COUNT(CASE WHEN sched_departure > actual_departure AND (status = "Arrived" OR status = "On Time") THEN 1 END) AS late_flights,
-        COUNT(CASE WHEN status = "Cancelled" THEN 1 END) AS cancelled_flights
+        aircraft,
+        ROUND((COUNT(CASE WHEN sched_departure <= actual_departure AND (status = 'Arrived' OR status = 'On Time') THEN 1 END) * 100.0) / 
+            (SUM(CASE WHEN sched_departure <= actual_departure AND (status = 'Arrived' OR status = 'On Time') THEN 1 ELSE 0 END) + 
+            SUM(CASE WHEN sched_departure > actual_departure AND (status = 'Arrived' OR status = 'On Time') THEN 1 ELSE 0 END) + 
+            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END)), 2) AS on_time_percentage,
+        
+        ROUND((COUNT(CASE WHEN sched_departure > actual_departure AND (status = 'Arrived' OR status = 'On Time') THEN 1 END) * 100.0) / 
+            (SUM(CASE WHEN sched_departure <= actual_departure AND (status = 'Arrived' OR status = 'On Time') THEN 1 ELSE 0 END) + 
+            SUM(CASE WHEN sched_departure > actual_departure AND (status = 'Arrived' OR status = 'On Time') THEN 1 ELSE 0 END) + 
+            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END)), 2) AS late_percentage,
+        
+        ROUND((COUNT(CASE WHEN status = 'Cancelled' THEN 1 END) * 100.0) / 
+            (SUM(CASE WHEN sched_departure <= actual_departure AND (status = 'Arrived' OR status = 'On Time') THEN 1 ELSE 0 END) + 
+            SUM(CASE WHEN sched_departure > actual_departure AND (status = 'Arrived' OR status = 'On Time') THEN 1 ELSE 0 END) + 
+            SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END)), 2) AS cancelled_percentage
     FROM Flight
-    GROUP BY aircraft
+    GROUP BY aircraft;
     '''
 
     # Execute, store, and print query
@@ -155,17 +179,17 @@ elif user_input == "3":
 
     query = '''
     SELECT 
-        d.weekday,
-        b.arr_airport,
-        SUM(b.amount) AS total_amount
+    d.weekday,
+    f.arr_airport,
+    ROUND(AVG(f.flight_revenue), 2) AS average_revenue_per_day
     FROM 
-        Boarding_Pass b
+        Flight f
     JOIN 
-        Date d ON b.sched_departure = d.date_id
+        Date d ON f.sched_departure = d.date_id
     GROUP BY 
-        b.arr_airport, d.weekday
+        f.arr_airport, d.weekday
     ORDER BY 
-        d.weekday, b.arr_airport;
+        d.weekday, f.arr_airport;
     '''
 
     # Execute, store, and print query
